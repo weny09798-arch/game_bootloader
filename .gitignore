@@ -1,0 +1,10 @@
+build/
+dist/
+__pycache__/
+*.pyc
+*.o
+*.obj
+*.uvguix.*
+*.uvoptx
+.superpowers/
+.worktrees/
