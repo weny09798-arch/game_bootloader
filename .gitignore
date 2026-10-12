@@ -8,3 +8,5 @@ __pycache__/
 *.uvoptx
 .superpowers/
 .worktrees/
+tests/native/*.exe
+DebugConfig/
