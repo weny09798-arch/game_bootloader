@@ -36,6 +36,11 @@ def main():
                     'firmware/app/app_support.c', 'tests/native/app_port_test.c',
                     '-o', str(port_exe)], cwd=ROOT, check=True)
     subprocess.run([str(port_exe)], cwd=ROOT, check=True)
+    debounce_exe = ROOT / 'build' / 'native' / ('debounce_test.exe' if os.name == 'nt' else 'debounce_test')
+    subprocess.run([compiler, '-std=c99', '-Wall', '-Wextra', '-Werror', '-pedantic', '-O1',
+                    '-Ifirmware/port', 'firmware/port/debounce.c', 'tests/native/debounce_test.c',
+                    '-o', str(debounce_exe)], cwd=ROOT, check=True)
+    subprocess.run([str(debounce_exe)], cwd=ROOT, check=True)
     subprocess.run([sys.executable, '-m', 'unittest', 'discover', '-s', 'tests', '-v'], cwd=ROOT, check=True)
 
 

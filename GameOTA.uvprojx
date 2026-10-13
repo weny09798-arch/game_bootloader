@@ -445,6 +445,28 @@
               </FileOption>
             </File>
             <File>
+              <FileName>debounce.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\firmware\port\debounce.c</FilePath>
+              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>0</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>1</IncludeInBuild>
+                  <AlwaysBuild>0</AlwaysBuild>
+                  <GenerateAssemblyFile>0</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>0</AssembleAssemblyFile>
+                  <PublicsOnly>0</PublicsOnly>
+                  <StopOnExitCode>3</StopOnExitCode>
+                  <CustomArgument />
+                  <IncludeLibraryModules />
+                </CommonProperty>
+              </FileOption>
+            </File>
+            <File>
               <FileName>jump.s</FileName>
               <FileType>2</FileType>
               <FilePath>.\firmware\port\jump.s</FilePath>
@@ -1286,6 +1308,28 @@
               </FileOption>
             </File>
             <File>
+              <FileName>debounce.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\firmware\port\debounce.c</FilePath>
+              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>0</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>1</IncludeInBuild>
+                  <AlwaysBuild>0</AlwaysBuild>
+                  <GenerateAssemblyFile>0</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>0</AssembleAssemblyFile>
+                  <PublicsOnly>0</PublicsOnly>
+                  <StopOnExitCode>3</StopOnExitCode>
+                  <CustomArgument />
+                  <IncludeLibraryModules />
+                </CommonProperty>
+              </FileOption>
+            </File>
+            <File>
               <FileName>jump.s</FileName>
               <FileType>2</FileType>
               <FilePath>.\firmware\port\jump.s</FilePath>
@@ -2108,6 +2152,28 @@
               <FileName>board.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\firmware\port\board.c</FilePath>
+              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>0</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>1</IncludeInBuild>
+                  <AlwaysBuild>0</AlwaysBuild>
+                  <GenerateAssemblyFile>0</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>0</AssembleAssemblyFile>
+                  <PublicsOnly>0</PublicsOnly>
+                  <StopOnExitCode>3</StopOnExitCode>
+                  <CustomArgument />
+                  <IncludeLibraryModules />
+                </CommonProperty>
+              </FileOption>
+            </File>
+            <File>
+              <FileName>debounce.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\firmware\port\debounce.c</FilePath>
               <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>0</UseCPPCompiler>

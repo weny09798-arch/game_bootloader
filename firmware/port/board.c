@@ -1,4 +1,5 @@
 #include "board.h"
+#include "debounce.h"
 #include "OLED_I2C.h"
 #include <string.h>
 
@@ -11,71 +12,82 @@ static volatile uint8_t key_event;
 static uint32_t now_ms;
 static uint16_t last_timer;
 static uint16_t half_ms;
-static uint8_t key_waiting, key_consumed;
-static uint32_t key_at;
+static key_debounce_t key;
 
-static int flash_read(void *user, uint32_t address, uint8_t *data, uint32_t len)
-{
+static int flash_read(void *user, uint32_t address, uint8_t *data,
+                      uint32_t len) {
     (void)user;
-    if (address < 0x08000000u || len > 0x10000u || address > 0x08010000u - len) return 0;
+    if (address < 0x08000000u || len > 0x10000u || address > 0x08010000u - len)
+        return 0;
     memcpy(data, (const void *)address, len);
     return 1;
 }
 
-static int writable(uint32_t address, uint32_t len)
-{
-    return address >= 0x08004000u && len <= 0xC000u && address <= 0x08010000u - len;
+static int writable(uint32_t address, uint32_t len) {
+    return address >= 0x08004000u && len <= 0xC000u &&
+           address <= 0x08010000u - len;
 }
 
-static int flash_erase(void *user, uint32_t address)
-{
+static int flash_erase(void *user, uint32_t address) {
     FLASH_Status status;
     uint32_t irq = __get_PRIMASK();
     (void)user;
-    if (!writable(address, 0x400u) || (address & 0x3FFu)) return 0;
+    if (!writable(address, 0x400u) || (address & 0x3FFu))
+        return 0;
     RCC_HSICmd(ENABLE);
-    while (RCC_GetFlagStatus(RCC_FLAG_HSIRDY) == RESET) {}
+    while (RCC_GetFlagStatus(RCC_FLAG_HSIRDY) == RESET) {
+    }
     __disable_irq();
     FLASH_Unlock();
     FLASH_ClearFlag(FLASH_FLAG_EOP | FLASH_FLAG_PGERR | FLASH_FLAG_WRPRTERR);
     status = FLASH_ErasePage(address);
     FLASH_Lock();
     __set_PRIMASK(irq);
-    if (status != FLASH_COMPLETE) return 0;
+    if (status != FLASH_COMPLETE)
+        return 0;
     for (uint32_t i = 0; i < 0x400u; i += 4u)
-        if (*(volatile uint32_t *)(address + i) != 0xFFFFFFFFu) return 0;
+        if (*(volatile uint32_t *)(address + i) != 0xFFFFFFFFu)
+            return 0;
     return 1;
 }
 
-static int flash_write(void *user, uint32_t address, const uint8_t *data, uint32_t len)
-{
+static int flash_write(void *user, uint32_t address, const uint8_t *data,
+                       uint32_t len) {
     uint32_t irq;
     FLASH_Status status = FLASH_COMPLETE;
     (void)user;
-    if ((address & 1u) || !len || !writable(address, (len + 1u) & ~1u)) return 0;
+    if ((address & 1u) || !len || !writable(address, (len + 1u) & ~1u))
+        return 0;
     RCC_HSICmd(ENABLE);
-    while (RCC_GetFlagStatus(RCC_FLAG_HSIRDY) == RESET) {}
+    while (RCC_GetFlagStatus(RCC_FLAG_HSIRDY) == RESET) {
+    }
     irq = __get_PRIMASK();
     __disable_irq();
     FLASH_Unlock();
     FLASH_ClearFlag(FLASH_FLAG_EOP | FLASH_FLAG_PGERR | FLASH_FLAG_WRPRTERR);
     for (uint32_t i = 0; i < len; i += 2u) {
-        uint16_t value = data[i] | ((uint16_t)(i + 1u < len ? data[i + 1u] : 0xFFu) << 8);
-        if (*(volatile uint16_t *)(address + i) != 0xFFFFu) { status = FLASH_ERROR_PG; break; }
+        uint16_t value =
+            data[i] | ((uint16_t)(i + 1u < len ? data[i + 1u] : 0xFFu) << 8);
+        if (*(volatile uint16_t *)(address + i) != 0xFFFFu) {
+            status = FLASH_ERROR_PG;
+            break;
+        }
         status = FLASH_ProgramHalfWord(address + i, value);
-        if (status != FLASH_COMPLETE || *(volatile uint16_t *)(address + i) != value) break;
+        if (status != FLASH_COMPLETE ||
+            *(volatile uint16_t *)(address + i) != value)
+            break;
     }
     FLASH_Lock();
     __set_PRIMASK(irq);
-    if (status != FLASH_COMPLETE || memcmp((const void *)address, data, len)) return 0;
+    if (status != FLASH_COMPLETE || memcmp((const void *)address, data, len))
+        return 0;
     return 1;
 }
 
 static const ota_flash_t flash_io = {0, flash_read, flash_erase, flash_write};
 const ota_flash_t *board_flash(void) { return &flash_io; }
 
-uint32_t board_millis(void)
-{
+uint32_t board_millis(void) {
     uint16_t count = (uint16_t)TIM2->CNT;
     uint32_t elapsed = (uint16_t)(count - last_timer) + half_ms;
     last_timer = count;
@@ -84,14 +96,13 @@ uint32_t board_millis(void)
     return now_ms;
 }
 
-void board_wait(uint32_t ms)
-{
+void board_wait(uint32_t ms) {
     uint32_t start = board_millis();
-    while ((uint32_t)(board_millis() - start) < ms) {}
+    while ((uint32_t)(board_millis() - start) < ms) {
+    }
 }
 
-void board_init(void)
-{
+void board_init(void) {
     GPIO_InitTypeDef gpio;
     USART_InitTypeDef uart;
     TIM_TimeBaseInitTypeDef timer;
@@ -99,14 +110,21 @@ void board_init(void)
     EXTI_InitTypeDef exti;
     RCC_ClocksTypeDef clocks;
     rx_head = rx_tail = 0;
-    rx_fault = key_event = key_waiting = key_consumed = 0;
+    rx_fault = key_event = 0;
+    key_debounce_init(&key);
     now_ms = half_ms = last_timer = 0;
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO | RCC_APB2Periph_USART1, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO |
+                               RCC_APB2Periph_USART1,
+                           ENABLE);
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
     RCC_GetClocksFreq(&clocks);
     TIM_TimeBaseStructInit(&timer);
     timer.TIM_Period = 65535;
-    timer.TIM_Prescaler = (uint16_t)((clocks.PCLK1_Frequency * ((RCC->CFGR & RCC_CFGR_PPRE1) ? 2u : 1u)) / 2000u - 1u);
+    timer.TIM_Prescaler =
+        (uint16_t)((clocks.PCLK1_Frequency *
+                    ((RCC->CFGR & RCC_CFGR_PPRE1) ? 2u : 1u)) /
+                       2000u -
+                   1u);
     TIM_TimeBaseInit(TIM2, &timer);
     TIM_SetCounter(TIM2, 0);
     TIM_Cmd(TIM2, ENABLE);
@@ -145,32 +163,37 @@ void board_init(void)
     key_event = GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_0) == 0;
 }
 
-void USART1_IRQHandler(void)
-{
+void USART1_IRQHandler(void) {
     uint32_t status = USART1->SR;
     if (status & (USART_SR_RXNE | USART_SR_ORE | USART_SR_FE | USART_SR_NE)) {
         uint8_t byte = (uint8_t)USART1->DR;
         rx_last_timer = (uint16_t)TIM2->CNT;
         uint16_t next = (uint16_t)((rx_head + 1u) & (RX_SIZE - 1u));
-        if ((status & (USART_SR_ORE | USART_SR_FE | USART_SR_NE)) || next == rx_tail) rx_fault = 1;
-        else if (!rx_fault) { rx[rx_head] = byte; rx_head = next; }
+        if ((status & (USART_SR_ORE | USART_SR_FE | USART_SR_NE)) ||
+            next == rx_tail)
+            rx_fault = 1;
+        else if (!rx_fault) {
+            rx[rx_head] = byte;
+            rx_head = next;
+        }
     }
 }
 
-int board_rx_byte(uint8_t *byte)
-{
-    if (rx_tail == rx_head || rx_fault) return 0;
+int board_rx_byte(uint8_t *byte) {
+    if (rx_tail == rx_head || rx_fault)
+        return 0;
     *byte = rx[rx_tail];
     rx_tail = (uint16_t)((rx_tail + 1u) & (RX_SIZE - 1u));
     return 1;
 }
 
-int board_rx_fault(void)
-{
+int board_rx_fault(void) {
     uint32_t irq;
-    if (!rx_fault) return 0;
+    if (!rx_fault)
+        return 0;
     /* Discard the whole damaged burst before re-enabling frame/text parsing. */
-    if ((uint16_t)((uint16_t)TIM2->CNT - rx_last_timer) < 200u) return 0;
+    if ((uint16_t)((uint16_t)TIM2->CNT - rx_last_timer) < 200u)
+        return 0;
     irq = __get_PRIMASK();
     __disable_irq();
     rx_tail = rx_head;
@@ -179,41 +202,40 @@ int board_rx_fault(void)
     return 1;
 }
 
-void board_send(const uint8_t *data, uint16_t len)
-{
+void board_send(const uint8_t *data, uint16_t len) {
     board_wait(50); /* allow module RX-to-TX turnaround */
     for (uint16_t i = 0; i < len; ++i) {
-        while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET) {}
+        while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET) {
+        }
         USART_SendData(USART1, data[i]);
     }
-    while (USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET) {}
+    while (USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET) {
+    }
 }
 
-void EXTI0_IRQHandler(void)
-{
+void EXTI0_IRQHandler(void) {
     if (EXTI_GetITStatus(EXTI_Line0) != RESET) {
         EXTI_ClearITPendingBit(EXTI_Line0);
         key_event = 1;
     }
 }
 
-int board_key_pressed(void)
-{
+int board_key_pressed(void) {
+    uint32_t irq;
+    uint8_t edge;
     uint32_t now = board_millis();
-    int low = GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_0) == 0;
-    if (!low) { key_waiting = key_consumed = key_event = 0; return 0; }
-    if (key_consumed) return 0;
-    if (!key_waiting && key_event) { key_at = now; key_waiting = 1; key_event = 0; }
-    if (key_waiting && (uint32_t)(now - key_at) >= 30u) {
-        key_waiting = 0;
-        key_consumed = 1;
-        return 1;
-    }
-    return 0;
+    int low;
+    /* Consume without losing a new ISR event or changing the caller's mask. */
+    irq = __get_PRIMASK();
+    __disable_irq();
+    edge = key_event;
+    key_event = 0;
+    low = GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_0) == 0;
+    __set_PRIMASK(irq);
+    return key_debounce_poll(&key, now, low, edge);
 }
 
-void board_screen(const char *a, const char *b, const char *c)
-{
+void board_screen(const char *a, const char *b, const char *c) {
     OLED_Clear();
     OLED_ShowString(0, 0, (char *)a, 6);
     OLED_ShowString(0, 20, (char *)b, 6);
@@ -222,8 +244,7 @@ void board_screen(const char *a, const char *b, const char *c)
 }
 
 extern void board_jump_asm(uint32_t sp, uint32_t reset);
-void board_jump_to_app(void)
-{
+void board_jump_to_app(void) {
     uint32_t sp = *(volatile uint32_t *)0x08004000u;
     uint32_t reset = *(volatile uint32_t *)0x08004004u;
     __disable_irq();
@@ -240,7 +261,8 @@ void board_jump_to_app(void)
     __DSB();
     __ISB();
     board_jump_asm(sp, reset);
-    while (1) {}
+    while (1) {
+    }
 }
 
 void board_reset(void) { NVIC_SystemReset(); }

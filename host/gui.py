@@ -151,12 +151,12 @@ class UpgradeApp:
             image = FirmwareImage(Path(path).read_bytes(), version) if upgrading else None
             if self.cancel_event.is_set():
                 raise Cancelled('已取消，尚未打开串口')
-            transport = self.serial_factory(port, baudrate=baud, timeout=0.1, write_timeout=5.0)
+            # Serialize opening with window close, so shutdown cannot finish
+            # while a worker is still opening an unregistered transport.
             with self._transport_lock:
                 if self.closed:
-                    transport.close()
-                    transport = None
                     return
+                transport = self.serial_factory(port, baudrate=baud, timeout=0.1, write_timeout=5.0)
                 self.transport = transport
             uploader = Uploader(transport, cancel_event=self.cancel_event,
                                 log=lambda message: self.events.put(('log', message)))
@@ -174,14 +174,16 @@ class UpgradeApp:
         except Exception as error:
             self.events.put(('error', f'操作失败：{error}'))
         finally:
+            # Keep the transport visible until explicit close has completed.
+            # The shutdown timer shares this lock and never joins the worker.
             with self._transport_lock:
+                if transport is not None:
+                    try:
+                        transport.close()
+                    except OSError:
+                        pass
                 self.transport = None
                 self.uploader = None
-            if transport is not None:
-                try:
-                    transport.close()
-                except OSError:
-                    pass
             self.events.put(('idle', None))
 
     def _poll_events(self):
@@ -217,23 +219,25 @@ class UpgradeApp:
     def _close_transport(self):
         with self._transport_lock:
             transport = self.transport
-        if transport is not None:
-            try:
-                transport.close()
-            except OSError:
-                pass
+            if transport is not None:
+                try:
+                    transport.close()
+                except OSError:
+                    pass
 
     def close(self):
-        if self.closed:
-            return
-        self.closed = True
+        with self._transport_lock:
+            if self.closed:
+                return
+            self.closed = True
         self.cancel_event.set()
         self.root.after_cancel(self._poll_token)
         if self.busy:
             # Give receive cancellation a brief opportunity without blocking Tk.
             # Closing during COMMIT means the outcome must be queried next time.
             timer = threading.Timer(1.0, self._close_transport)
-            timer.daemon = True
+            # This bounded cleanup must survive Tk/main-thread termination.
+            timer.daemon = False
             timer.start()
         else:
             self._close_transport()

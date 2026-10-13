@@ -11,7 +11,7 @@ from packaging import factory_segments, intel_hex, validate_app
 
 ROOT = Path(__file__).resolve().parents[1]
 COMMON = ['firmware/common/ota.c', 'firmware/common/protocol.c']
-PORT = ['firmware/port/board.c', 'firmware/port/jump.s']
+PORT = ['firmware/port/board.c', 'firmware/port/debounce.c', 'firmware/port/jump.s']
 START = ['firmware/legacy/Start/startup_stm32f10x_md.s',
          'firmware/legacy/Start/system_stm32f10x.c', 'firmware/legacy/Start/core_cm3.c']
 LIBRARY = ['firmware/legacy/Library/' + n + '.c' for n in
@@ -105,6 +105,8 @@ def main():
         for name in names:
             for suffix in ('.bin', '.hex', '.axf', '.map'):
                 shutil.copy2(ROOT / 'build' / name / (name + suffix), release)
+        for game, version in (('deer', 1), ('dinosaur', 2)):
+            shutil.copy2(release / (game + '.bin'), release / f'{game}_v{version}.bin')
         for game, version in (('deer', 1), ('dinosaur', 2)):
             (release / ('factory_' + game + '.hex')).write_text(
                 intel_hex(factory_segments(built['boot'][0], built[game][0], version)), encoding='ascii')
