@@ -1,0 +1,26 @@
+{
+  "boot": {
+    "target": "boot",
+    "base": "0x8000000",
+    "bytes": 12344,
+    "limit": 16384,
+    "crc32": "701A033A",
+    "version": 0
+  },
+  "deer": {
+    "target": "deer",
+    "base": "0x8004000",
+    "bytes": 19124,
+    "limit": 23552,
+    "crc32": "F587127D",
+    "version": 1
+  },
+  "dinosaur": {
+    "target": "dinosaur",
+    "base": "0x8004000",
+    "bytes": 19124,
+    "limit": 23552,
+    "crc32": "149D4AF9",
+    "version": 2
+  }
+}

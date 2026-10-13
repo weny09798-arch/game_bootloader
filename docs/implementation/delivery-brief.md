@@ -1,0 +1,15 @@
+# Final delivery packaging and documentation
+
+Root: C:/毕业设计_许剑峰/game_bootloader. Read this first. One implementation task, no subagents, use applicable TDD and verification skills. Preserve unrelated existing changes. Own tools/build.py, tests/test_packaging.py as necessary, README.md, docs/protocol.md, docs/validation.md, docs/implementation/port-report.md, existing .vscode/tasks.json and GameOTA.code-workspace, plus releases/2026-10-13/. Do not edit firmware or host. Do not commit or push; report docs/implementation/delivery-report.md.
+
+Build currently produces generic deer.bin/dinosaur.bin and manifest. Add version-tagged aliases deer_v1.bin and dinosaur_v2.bin alongside generic names, so existing host filename inference fills correct version. Test alias contents/manifest relationship without requiring an installed ARM compiler for that unit test. Avoid complex packaging framework. Ensure fresh full build passes. Keep generic names for compatibility.
+
+Publish tracked prebuilt files to releases/2026-10-13/: factory_deer.hex, factory_dinosaur.hex, deer_v1.bin, dinosaur_v2.bin and manifest.json. Use Copy-Item for generated binary release copies, not bespoke file writes; scripts/source/docs use apply_patch. BIN/HEX must match current dist, and include SHA256SUMS.txt or equivalent manifest SHA256 values for these shipped files if straightforward. Do not track AXF/MAP/objects. Original game and LabVIEW source untouched.
+
+Chinese README should point to prebuilt release folder (no compiler needed to first test), correct version-tagged paths, Python install then GUI command, first full erase only as already stated, pinout, external module transparent 9600 8N1 setup, manual restart key behavior, waiting mode and serial exclusivity. Retain limitations: CRC not authentication, no factory rollback, app limit23KB, no hardware validation. Remove unsupported recommended specific LoRa air-rate: only require both ends matched and according to module manual.
+
+Document ota_recover transition for corrupted stage while INSTALLING: revalidate source, preserve valid candidate on read/write failures; if invalid source and old app verification completes, persist request=1 and VALID(old A) or EMPTY; allow fresh transfer and never autojump invalid app. Clarify previous port report was historical checkpoint and now fixes tested, not unresolved bug. Keep docs exact with code.
+
+Fresh coordinator evidence on 2026-10-13: python tools/verify.py exit0, core199984 checks0fail; receive cuts12034, copy12003, journal rollover544 each direction; invalid-stage recovery journal cuts32 each valid/invalid-oldA case; actual app-port PASS and debounce23 checks PASS; Python38 testsOK no skips. python tools/build.py exit0 boot12344/16384bytes, deer/dinosaur19124/23552. UV4 boot/deer/dinosaur all0 errors0 warnings. Refresh verify/build after your changes; counts may increase from new packaging tests. docs/validation.md lists exact actual final stats and all physical board/radio/power matrix still pending.
+
+Report modified files, commands/output/tests, prebuilt checksums and remaining physical validation. No broad implementation changes.

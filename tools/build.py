@@ -88,6 +88,21 @@ def build_target(name, toolchain):
         (ROOT / folder / 'build.log').write_text('\n'.join(log), encoding='utf-8')
 
 
+def publish_artifacts(built, release):
+    """Publish compiled targets and host-compatible version-tagged BIN aliases."""
+    release.mkdir(exist_ok=True)
+    for name in built:
+        for suffix in ('.bin', '.hex', '.axf', '.map'):
+            shutil.copy2(ROOT / 'build' / name / (name + suffix), release)
+    for game, version in (('deer', 1), ('dinosaur', 2)):
+        shutil.copy2(release / (game + '.bin'), release / f'{game}_v{version}.bin')
+        (release / ('factory_' + game + '.hex')).write_text(
+            intel_hex(factory_segments(built['boot'][0], built[game][0], version)), encoding='ascii')
+    (release / 'manifest.json').write_text(json.dumps(
+        {name: built[name][1] for name in built}, indent=2) + '\n', encoding='utf-8')
+    print('Validated artifacts: ' + str(release))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--toolchain', default=os.environ.get('ARMCC5_BIN', 'D:/keil5/ARM/ARMCC/bin'))
@@ -100,19 +115,7 @@ def main():
     names = ('boot', 'deer', 'dinosaur') if args.target == 'all' else (args.target,)
     built = {name: build_target(name, toolchain) for name in names}
     if args.target == 'all':
-        release = ROOT / 'dist'
-        release.mkdir(exist_ok=True)
-        for name in names:
-            for suffix in ('.bin', '.hex', '.axf', '.map'):
-                shutil.copy2(ROOT / 'build' / name / (name + suffix), release)
-        for game, version in (('deer', 1), ('dinosaur', 2)):
-            shutil.copy2(release / (game + '.bin'), release / f'{game}_v{version}.bin')
-        for game, version in (('deer', 1), ('dinosaur', 2)):
-            (release / ('factory_' + game + '.hex')).write_text(
-                intel_hex(factory_segments(built['boot'][0], built[game][0], version)), encoding='ascii')
-        (release / 'manifest.json').write_text(json.dumps(
-            {name: built[name][1] for name in names}, indent=2) + '\n', encoding='utf-8')
-        print('Validated artifacts: ' + str(release))
+        publish_artifacts(built, ROOT / 'dist')
 
 
 if __name__ == '__main__':

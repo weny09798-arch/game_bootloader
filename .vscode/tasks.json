@@ -1,0 +1,9 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {"label": "Install upgrade tool dependencies", "type": "process", "command": "python", "args": ["-m", "pip", "install", "-r", "requirements.txt"], "options": {"cwd": "${workspaceFolder}"}, "problemMatcher": []},
+    {"label": "Build all OTA firmware", "type": "process", "command": "python", "args": ["tools/build.py"], "options": {"cwd": "${workspaceFolder}"}, "group": {"kind": "build", "isDefault": true}, "problemMatcher": []},
+    {"label": "Verify OTA software", "type": "process", "command": "python", "args": ["tools/verify.py"], "options": {"cwd": "${workspaceFolder}"}, "group": "test", "problemMatcher": []},
+    {"label": "Open LoRa upgrade GUI", "type": "process", "command": "python", "args": ["-m", "host.gui"], "options": {"cwd": "${workspaceFolder}"}, "problemMatcher": []}
+  ]
+}
