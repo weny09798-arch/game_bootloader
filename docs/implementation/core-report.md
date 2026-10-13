@@ -1,5 +1,7 @@
 # Portable OTA core report
 
+> Historical checkpoint: this report preserves the original core implementation and test evidence. Its statement below that an invalid candidate in `INSTALLING` is retained for diagnostics describes the behavior at that checkpoint; current firmware uses durable invalid-source recovery through `ota_recover`. See [the protocol recovery description](../protocol.md#installing-重启恢复) and [the integration fix report](integration-fix-report.md) for the current behavior.
+
 ## Files and interface
 
 - `firmware/common/ota.h`, `ota.c`: portable C99 update engine and two-page metadata journal.
