@@ -316,7 +316,7 @@ void Game_DrawScene(void)
     /* 血量 */
     for (i = 0; i < Dinosaur_blood; i++)
     {
-        OLED_ShowImage(120 - i * 8, 6, 7, 6, blood);
+        OLED_ShowImage(120 - i * 8, 56, 7, 6, blood);
     }
 
     /* 障碍物 */
@@ -381,7 +381,7 @@ void Game_Draw(void)
         Game_DrawOver();
     }
 
-    OLED_Printf(102, 56, 6, "V%u", (unsigned)GAME_VERSION);
+    OLED_Printf(114, 0, 6, "V%u", (unsigned)GAME_VERSION);
     OLED_Update();
 }
 

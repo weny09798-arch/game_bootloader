@@ -148,15 +148,16 @@ void OLED_Init(GPIO_TypeDef* GPIOx,uint16_t SCl,uint16_t SDA)
 	OLED_WriteCommand(0xA6);	//设置正常/反色显示�?0xA6正常�?0xA7反色
 	OLED_WriteCommand(0x8D);	//设置充电�?
 	OLED_WriteCommand(0x14);
-	OLED_WriteCommand(0xAF);	//开�?显示
 	
 	OLED_Clear();				//清空显存数组
 	OLED_Update();				//更新显示，清屏，防�?�初始化后未显示内�?�时花屏
+	/* Enable only after all 128 SSD1306 columns have been initialized. */
+	OLED_WriteCommand(0xAF);
 }
 
 void OLED_SetCursor(uint8_t Page, uint8_t X)//(0~7,0~127)
 {
-	X += 2;//1.3 inch OLED screen
+	/* SSD1306 has 128 columns: logical X maps directly to controller X. */
 	OLED_WriteCommand(0xB0 | Page);					//设置页位�?
 	OLED_WriteCommand(0x10 | ((X & 0xF0) >> 4));	//设置X位置�?4�?
 	OLED_WriteCommand(0x00 | (X & 0x0F));			//设置X位置�?4�?

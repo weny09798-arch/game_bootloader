@@ -1,2 +1,2 @@
 # Preserve shipped artifacts and their checksum file byte-for-byte on every platform.
-releases/** -text
+releases/** -text whitespace=trailing-space,space-before-tab,cr-at-eol

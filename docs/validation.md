@@ -4,7 +4,16 @@
 
 电脑上的自动测试直接使用`firmware/common`实际C代码及应用串口处理代码。Flash模拟验证地址范围、1KB页擦除、擦后半字写入及可注入的中途断电。射频链路、开发板引脚与真实Flash掉电尚未连接验证，不能将模拟结果表述为实物已通过。
 
-## 已执行的软件检查（2026-10-13 最终交付）
+## OLED 修正检查（2026-10-15）
+
+用户照片已确认旧版能显示小鹿 V1 就绪页，同时存在左侧亮线及版本号覆盖操作文字；用户确认 OLED 为 SSD1306。新版取消硬编码的两列偏移，先清屏再点亮，版本号移到右上角、血量移到右下角。实屏复烧确认尚待用户执行。
+
+- `python -m unittest discover -s tests -p test_oled_display.py -v`：修正前在两版游戏上均报告边缘显存未清、帧缓冲错位及文字重叠，修正后通过。测试编译实际 OLED 初始化/图形代码、实际字体及实际游戏绘制，仅用 SSD1306 显存模型替代 GPIO/I2C 传输。
+- `python tools/verify.py`：199984 项核心断言无失败，应用串口 PASS，消抖 23 项 PASS，Python **40 tests, OK**，无跳过。
+- `python tools/build.py`：boot 12344/16384 字节，deer/dinosaur 各 19120/23552 字节；CRC32 依次为 `B939D2EA`、`2F9DADD1`、`82856DB4`。本次使用 ARMCC 命令行构建三个目标；未把旧版 Keil 检查冒充为本次检查。
+- 新包 `releases/2026-10-15/` 包含新的合并 HEX、应用 BIN、manifest 和 SHA256；旧包保持原样。实际帧缓冲预览与复烧步骤见 [修正记录](implementation/2026-10-15-oled-fix.md)。
+
+## 已执行的软件检查（2026-10-13 历史交付）
 
 - 本次运行 `python tools/build.py` 退出码0：boot **12344 / 16384** 字节，deer、dinosaur 各 **19124 / 23552** 字节；BIN基址、向量表和分区大小已检查。对应 CRC32：boot `701A033A`、deer `F587127D`、dinosaur `149D4AF9`。
 - 协调者于同日执行 Keil uVision5 原生构建：boot、deer、dinosaur 三个目标均 **0 errors, 0 warnings**。交付阶段仅提取发布函数并补充测试、文档，未修改固件。
